@@ -140,63 +140,7 @@ void Macro::updateTPS() {
 }
 
 int Macro::save(std::string author, std::string desc, std::string path, bool json) {
-    auto& g = Global::get();
-
-    if (g.macro.inputs.empty()) return 31;
-
-    std::string extension = json ? ".gdr.json" : ".gdr";
-
-    int iterations = 0;
-
-    while (std::filesystem::exists(path + extension)) {
-        iterations++;
-
-        if (iterations > 1) {
-            int length = 3 + std::to_string(iterations - 1).length();
-            path.erase(path.length() - length, length);
-        }
-
-        path += fmt::format(" ({})", std::to_string(iterations));
-    }
-
-    path += extension;
-
-    log::debug("Saving macro to path: {}", path);
-
-    g.macro.author = author;
-    g.macro.description = desc;
-    g.macro.duration = g.macro.inputs.back().frame / g.macro.framerate;
-
-    std::wstring widePath = Utils::widen(path);
-
-    if (widePath == L"Widen Error")
-        return 30;
-
-    std::ofstream f(widePath, std::ios::binary);
-
-    if (!f)
-        f.open(path, std::ios::binary);
-
-    if (!f)
-        return 20;
-
-    std::vector<gdr::FrameFix> frameFixes = g.macro.frameFixes;
-
-    auto data = g.macro.exportData(json);
-
-    f.write(reinterpret_cast<const char*>(data.data()), data.size());
-
-    if (!f) {
-        f.close();
-        return 21;
-    }
-
-    if (!f)
-        return 22;
-
-    f.close();
-
-    return 0;
+    return saveGDR2(author, desc, path);
 }
 
 bool Macro::loadXDFile(std::filesystem::path path) {
@@ -357,4 +301,37 @@ bool Macro::shouldStep() {
     // }
 
     return false;
+}
+
+std::string Macro::getLevelName() {
+    return Global::get().macro.levelInfo.name;
+}
+
+uint32_t Macro::getLevelId() {
+    return Global::get().macro.levelInfo.id;
+}
+
+void Macro::setLevelInfo(const std::string& name, uint32_t id) {
+    auto& g = Global::get();
+    g.macro.levelInfo.name = name;
+    g.macro.levelInfo.id = id;
+}
+
+// Helper functions for gdr2 to avoid namespace collision
+namespace MacroHelpers {
+    std::string getLevelName() {
+        return Macro::getLevelName();
+    }
+
+    uint32_t getLevelId() {
+        return Macro::getLevelId();
+    }
+
+    void setLevelInfo(const std::string& name, uint32_t id) {
+        Macro::setLevelInfo(name, id);
+    }
+
+    Global& getGlobal() {
+        return Global::get();
+    }
 }

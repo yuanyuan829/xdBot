@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME} SHARED
     src/keybinds.cpp
     src/utils/utils.cpp
     src/gdr/gdr.cpp
+    src/gdr2/gdr2.cpp
+    src/gdr2/macro_gdr2.cpp
     src/renderer/renderer.cpp
 
     src/hacks/other.cpp
@@ -45,5 +47,8 @@ else()
 endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
+
+CPMAddPackage("gh:maxnut/GDR-converter#55c5321")
+target_link_libraries(${PROJECT_NAME} GDRconverter libGDR)
 
 setup_geode_mod(${PROJECT_NAME})

@@ -141,7 +141,7 @@ void LoadMacroLayer::onImportMacro(CCObject*) {
 	file::FilePickOptions::Filter textFilter;
 	file::FilePickOptions fileOptions;
 	textFilter.description = "Macro Files";
-	textFilter.files = { "*.gdr", "*.xd", "*.json" };
+	textFilter.files = { "*.gdr2", "*.xd" };
 	fileOptions.filters.push_back(textFilter);
 
 	file::pick(file::PickMode::OpenFile, { dirs::getGameDir(), { textFilter } }).listen([this](Result<std::filesystem::path>* res) {
@@ -420,12 +420,9 @@ void LoadMacroLayer::addList(bool refresh, float prevScroll) {
 
 	for (int i = invertSort ? macros.size() - 1 : 0; invertSort ? i >= 0 : i < macros.size(); invertSort ? --i : ++i) {
 
-		if (macros[i].extension() != ".gdr" && macros[i].extension() != ".xd" && macros[i].extension() != ".json") continue;
+		if (macros[i].extension() != ".gdr2" && macros[i].extension() != ".xd") continue;
 
 		std::string name = macros[i].filename().string().substr(0, macros[i].filename().string().find_last_of('.'));
-
-		if (macros[i].extension() == ".json")
-			name = name.substr(0, name.find_last_of('.'));
 
 		if (Utils::toLower(name).find(search) == std::string::npos && search != "") continue;
 
@@ -669,19 +666,19 @@ void MacroCell::handleLoad() {
 		if (isMerge)
 			g.macro = oldMacro;
 	}
+	else if (path.extension() == ".gdr2") {
+		if (!Macro::loadGDR2File(path)) {
+			if (!isMerge)
+				return FLAlertLayer::create("Error", "There was an error loading this gdr2 macro. ID: 46", "Ok")->show();
+			else
+				return;
+		}
+		newMacro = g.macro;
+		if (isMerge)
+			g.macro = oldMacro;
+	}
 	else {
-		std::ifstream f(path.string(), std::ios::binary);
-
-		f.seekg(0, std::ios::end);
-		size_t fileSize = f.tellg();
-		f.seekg(0, std::ios::beg);
-
-		std::vector<std::uint8_t> macroData(fileSize);
-
-		f.read(reinterpret_cast<char*>(macroData.data()), fileSize);
-		f.close();
-
-		newMacro = Macro::importData(macroData);
+		return FLAlertLayer::create("Error", "Unsupported file format", "Ok")->show();
 	}
 
 	if (isMerge) {

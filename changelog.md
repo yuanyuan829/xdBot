@@ -1,3 +1,8 @@
+# v2.4.2
+
+* Remove .gdr format support
+* Add .gdr2 format support
+
 # v2.4.1
 
 * Added Auto Clicker keybind.
